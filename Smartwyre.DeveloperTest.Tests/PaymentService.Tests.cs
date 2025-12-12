@@ -1,6 +1,7 @@
 using NSubstitute;
 using Smartwyre.DeveloperTest.Data;
 using Smartwyre.DeveloperTest.Services;
+using Smartwyre.DeveloperTest.Services.IncentiveCalculators;
 using Smartwyre.DeveloperTest.Types;
 using Xunit;
 
@@ -10,8 +11,9 @@ public class PaymentServiceTests
 {
     private IRebateDataStore _rebateDataStore = Substitute.For<IRebateDataStore>();
     private IProductDataStore _productDataStore = Substitute.For<IProductDataStore>();
+    private IRebateCalculatorFactory _rebateCalculatorFactory = Substitute.For<IRebateCalculatorFactory>();
 
-    private RebateService _rebateService => new(_rebateDataStore, _productDataStore);
+    private RebateService _rebateService => new(_rebateDataStore, _productDataStore, _rebateCalculatorFactory);
 
     [Fact(DisplayName = "Should return failure when rebate is not found in datastore")]
     public void Should_ReturnFailure_When_RabateIsNotFound()
@@ -101,5 +103,41 @@ public class PaymentServiceTests
 
         // Assert
         Assert.False(result.IsSuccess);
+    }
+
+    [Fact(DisplayName = "Should return failure when calculator is not found by Incentive type")]
+    public void ShouldReturnFailure_When_CalculatorIsNotFoundByIncentiveType()
+    {
+        // Arrange
+        // Arrange
+        var request = new CalculateRebateRequest
+        {
+            RebateIdentifier = "some-rebate",
+            ProductIdentifier = "some-product",
+            Volume = 10
+        };
+
+        _rebateDataStore.GetRebate(Arg.Is(request.RebateIdentifier))
+            .Returns(new Rebate
+            {
+                Amount = 50m,
+                Percentage = 0.1m,
+                Incentive = IncentiveType.FixedRateRebate
+            });
+
+        _productDataStore.GetProduct(Arg.Is(request.ProductIdentifier))
+            .Returns(new Product
+            {
+                Price = 200m,
+                SupportedIncentives = SupportedIncentiveType.FixedRateRebate
+            });
+
+        // Act
+        var result = _rebateService.Calculate(request);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        _rebateCalculatorFactory.Received(1)
+            .TryGet(Arg.Is(IncentiveType.FixedRateRebate), out Arg.Any<IRebateCalculator>());
     }
 }

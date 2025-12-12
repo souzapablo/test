@@ -1,4 +1,5 @@
 ﻿using Smartwyre.DeveloperTest.Data;
+using Smartwyre.DeveloperTest.Services.IncentiveCalculators;
 using Smartwyre.DeveloperTest.Types;
 
 namespace Smartwyre.DeveloperTest.Services;
@@ -7,11 +8,16 @@ public class RebateService : IRebateService
 {
     private readonly IRebateDataStore _rebateDataStore;
     private readonly IProductDataStore _productDataStore;
+    private readonly IRebateCalculatorFactory _rebateCalculatorFactory;
 
-    public RebateService(IRebateDataStore rebateDataStore, IProductDataStore productDataStore)
+    public RebateService(
+        IRebateDataStore rebateDataStore, 
+        IProductDataStore productDataStore, 
+        IRebateCalculatorFactory rebateCalculatorFactory)
     {
         _rebateDataStore = rebateDataStore;
         _productDataStore = productDataStore;
+        _rebateCalculatorFactory = rebateCalculatorFactory;
     }
 
     public CalculateRebateResult Calculate(CalculateRebateRequest request)
@@ -32,6 +38,10 @@ public class RebateService : IRebateService
             return CalculateRebateResult.Failure();
 
         var rebateAmount = 0m;
+
+        var calculatorExists = _rebateCalculatorFactory.TryGet(rebate.Incentive, out var calculator);
+        if (!calculatorExists)
+            return CalculateRebateResult.Failure();
 
         switch (rebate.Incentive)
         {
