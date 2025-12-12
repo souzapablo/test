@@ -21,18 +21,12 @@ public class RebateService : IRebateService
         Rebate rebate = _rebateDataStore.GetRebate(request.RebateIdentifier);
 
         if (rebate is null)
-        {
-            result.Success = false;
-            return result;
-        }
+            return CalculateRebateResult.Failure();
         
         Product product = _productDataStore.GetProduct(request.ProductIdentifier);
 
         if (product is null)
-        {
-            result.Success = false;
-            return result;
-        }
+            return CalculateRebateResult.Failure();
 
         var rebateAmount = 0m;
 
@@ -41,53 +35,53 @@ public class RebateService : IRebateService
             case IncentiveType.FixedCashAmount:
                 if (!product.SupportedIncentives.HasFlag(SupportedIncentiveType.FixedCashAmount))
                 {
-                    result.Success = false;
+                    result.IsSuccess = false;
                 }
                 else if (rebate.Amount == 0)
                 {
-                    result.Success = false;
+                    result.IsSuccess = false;
                 }
                 else
                 {
                     rebateAmount = rebate.Amount;
-                    result.Success = true;
+                    result.IsSuccess = true;
                 }
                 break;
 
             case IncentiveType.FixedRateRebate:
                 if (!product.SupportedIncentives.HasFlag(SupportedIncentiveType.FixedRateRebate))
                 {
-                    result.Success = false;
+                    result.IsSuccess = false;
                 }
                 else if (rebate.Percentage == 0 || product.Price == 0 || request.Volume == 0)
                 {
-                    result.Success = false;
+                    result.IsSuccess = false;
                 }
                 else
                 {
                     rebateAmount += product.Price * rebate.Percentage * request.Volume;
-                    result.Success = true;
+                    result.IsSuccess = true;
                 }
                 break;
 
             case IncentiveType.AmountPerUom:
                 if (!product.SupportedIncentives.HasFlag(SupportedIncentiveType.AmountPerUom))
                 {
-                    result.Success = false;
+                    result.IsSuccess = false;
                 }
                 else if (rebate.Amount == 0 || request.Volume == 0)
                 {
-                    result.Success = false;
+                    result.IsSuccess = false;
                 }
                 else
                 {
                     rebateAmount += rebate.Amount * request.Volume;
-                    result.Success = true;
+                    result.IsSuccess = true;
                 }
                 break;
         }
 
-        if (result.Success)
+        if (result.IsSuccess)
         {
             var storeRebateDataStore = new RebateDataStore();
             storeRebateDataStore.StoreCalculationResult(rebate, rebateAmount);

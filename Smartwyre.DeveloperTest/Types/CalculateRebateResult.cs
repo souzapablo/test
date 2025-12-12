@@ -2,5 +2,7 @@
 
 public class CalculateRebateResult
 {
-    public bool Success { get; set; }
+    public bool IsSuccess { get; set; }
+
+    public static CalculateRebateResult Failure() => new() { IsSuccess = false };
 }

@@ -27,7 +27,7 @@ public class PaymentServiceTests
         var result = _rebateService.Calculate(request);
 
         // Assert
-        Assert.False(result.Success);
+        Assert.False(result.IsSuccess);
         _rebateDataStore.Received(1).GetRebate("non-existing-rebate");
     }
 
@@ -51,7 +51,7 @@ public class PaymentServiceTests
         var result = _rebateService.Calculate(request);
 
         // Assert
-        Assert.False(result.Success);
+        Assert.False(result.IsSuccess);
         _rebateDataStore.Received(1).GetRebate("some-rebate");
         _productDataStore.Received(1).GetProduct("non-existing-product");
     }
