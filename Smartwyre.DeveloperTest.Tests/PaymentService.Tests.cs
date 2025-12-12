@@ -347,4 +347,176 @@ public class PaymentServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(rebateAmount, result.RebateAmount);       
     }
+
+    [Fact(DisplayName = "Should return failure when FixedRateRebate and RebatePercentage is not valid")]
+    public void Should_ReturnFailure_When_FixedRateRebateAndRebatePercentageIsNotValid()
+    {
+        // Arrange
+        var request = new CalculateRebateRequest
+        {
+            RebateIdentifier = "some-rebate",
+            ProductIdentifier = "some-product",
+            Volume = 10
+        };
+
+        _rebateDataStore.GetRebate(Arg.Is(request.RebateIdentifier))
+            .Returns(new Rebate
+            {
+                Percentage = 0,
+                Incentive = IncentiveType.FixedRateRebate
+            });
+
+        _productDataStore.GetProduct(Arg.Is(request.ProductIdentifier))
+            .Returns(new Product
+            {
+                Price = 10,
+                SupportedIncentives = SupportedIncentiveType.FixedRateRebate
+            });
+
+        _rebateCalculatorFactory.TryGet(Arg.Is(IncentiveType.FixedRateRebate), out Arg.Any<IRebateCalculator>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = new FixedRateRebateCalculator();
+                return true;
+            });
+            
+        // Act
+        var result = _rebateService.Calculate(request);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        _rebateCalculatorFactory.Received(1)
+            .TryGet(Arg.Is(IncentiveType.FixedRateRebate), out Arg.Any<IRebateCalculator>());
+        
+    }
+
+    [Fact(DisplayName = "Should return failure when FixedRateRebate and Volume is not valid")]
+    public void Should_ReturnFailure_When_FixedRateRebateAndVolumeIsNotValid()
+    {
+        // Arrange
+        var request = new CalculateRebateRequest
+        {
+            RebateIdentifier = "some-rebate",
+            ProductIdentifier = "some-product",
+            Volume = 0
+        };
+
+        _rebateDataStore.GetRebate(Arg.Is(request.RebateIdentifier))
+            .Returns(new Rebate
+            {
+                Percentage = 10,
+                Incentive = IncentiveType.FixedRateRebate
+            });
+
+        _productDataStore.GetProduct(Arg.Is(request.ProductIdentifier))
+            .Returns(new Product
+            {
+                Price = 10,
+                SupportedIncentives = SupportedIncentiveType.FixedRateRebate
+            });
+
+        _rebateCalculatorFactory.TryGet(Arg.Is(IncentiveType.FixedRateRebate), out Arg.Any<IRebateCalculator>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = new FixedRateRebateCalculator();
+                return true;
+            });
+            
+        // Act
+        var result = _rebateService.Calculate(request);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        _rebateCalculatorFactory.Received(1)
+            .TryGet(Arg.Is(IncentiveType.FixedRateRebate), out Arg.Any<IRebateCalculator>());
+        
+    }
+
+    [Fact(DisplayName = "Should return failure when FixedRateRebate and ProductPrice is not valid")]
+    public void Should_ReturnFailure_When_FixedRateRebateAndProductPriceIsNotValid()
+    {
+        // Arrange
+        var request = new CalculateRebateRequest
+        {
+            RebateIdentifier = "some-rebate",
+            ProductIdentifier = "some-product",
+            Volume = 10
+        };
+
+        _rebateDataStore.GetRebate(Arg.Is(request.RebateIdentifier))
+            .Returns(new Rebate
+            {
+                Percentage = 10,
+                Incentive = IncentiveType.FixedRateRebate
+            });
+
+        _productDataStore.GetProduct(Arg.Is(request.ProductIdentifier))
+            .Returns(new Product
+            {
+                Price = 0,
+                SupportedIncentives = SupportedIncentiveType.FixedRateRebate
+            });
+
+        _rebateCalculatorFactory.TryGet(Arg.Is(IncentiveType.FixedRateRebate), out Arg.Any<IRebateCalculator>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = new FixedRateRebateCalculator();
+                return true;
+            });
+            
+        // Act
+        var result = _rebateService.Calculate(request);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        _rebateCalculatorFactory.Received(1)
+            .TryGet(Arg.Is(IncentiveType.FixedRateRebate), out Arg.Any<IRebateCalculator>());
+        
+    }
+
+    [Theory(DisplayName = "Should calculate FixedRateRebate when input is valid")]
+    [InlineData(0.5, 10, 0.1, 0.5)]
+    [InlineData(2, 20, 0.1, 4)]
+    public void Should_Calculate_When_FixedRateRebateAndRebateIsValid(
+        decimal volume,
+        decimal price, 
+        decimal percentage,
+        decimal expectedRebate)
+    {
+        // Arrange
+        var request = new CalculateRebateRequest
+        {
+            RebateIdentifier = "some-rebate",
+            ProductIdentifier = "some-product",
+            Volume = volume
+        };
+
+        _rebateDataStore.GetRebate(Arg.Is(request.RebateIdentifier))
+            .Returns(new Rebate
+            {
+                Percentage = percentage,
+                Incentive = IncentiveType.FixedRateRebate
+            });
+
+        _productDataStore.GetProduct(Arg.Is(request.ProductIdentifier))
+            .Returns(new Product
+            {
+                Price = price,
+                SupportedIncentives = SupportedIncentiveType.FixedRateRebate
+            });
+
+        _rebateCalculatorFactory.TryGet(Arg.Is(IncentiveType.FixedRateRebate), out Arg.Any<IRebateCalculator>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = new FixedRateRebateCalculator();
+                return true;
+            });
+            
+        // Act
+        var result = _rebateService.Calculate(request);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(expectedRebate, result.RebateAmount);       
+    }
 }

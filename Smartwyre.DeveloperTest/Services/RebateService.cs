@@ -39,13 +39,8 @@ public class RebateService : IRebateService
         if (!calculatorExists)
             return CalculateRebateResult.Failure();
 
-        var context = new RebateCalculationContext
-        {
-            RebateAmount = rebate.Amount,
-            ProductPrice = product.Price,
-            Volume = request.Volume
-        };
-
+        var context = RebateCalculationContext.Create(product, rebate, request.Volume);
+        
         var result = rebateCalculator.Calculate(context);
 
         if (!result.IsSuccess)
