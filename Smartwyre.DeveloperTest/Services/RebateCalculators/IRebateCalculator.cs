@@ -5,5 +5,5 @@ namespace Smartwyre.DeveloperTest.Services.RebateCalculators;
 public interface IRebateCalculator
 {
     IncentiveType Incentive { get; }
-    public CalculateRebateResult Calculate(decimal rebateAmount, decimal productPrice, decimal? volume = null);
+    public CalculateRebateResult Calculate(RebateCalculationContext context);
 }

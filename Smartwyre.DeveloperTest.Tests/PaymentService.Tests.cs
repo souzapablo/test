@@ -109,7 +109,6 @@ public class PaymentServiceTests
     public void ShouldReturnFailure_When_CalculatorIsNotFoundByIncentiveType()
     {
         // Arrange
-        // Arrange
         var request = new CalculateRebateRequest
         {
             RebateIdentifier = "some-rebate",
@@ -139,5 +138,132 @@ public class PaymentServiceTests
         Assert.False(result.IsSuccess);
         _rebateCalculatorFactory.Received(1)
             .TryGet(Arg.Is(IncentiveType.FixedRateRebate), out Arg.Any<IRebateCalculator>());
+    }
+
+    [Fact(DisplayName = "Should return failure when incentive is AmountPerUom and volume is invalid")]
+    public void Should_ReturnFailure_When_AmountPerUomAndVolumeIsInvalid()
+    {
+        // Arrange
+        var request = new CalculateRebateRequest
+        {
+            RebateIdentifier = "some-rebate",
+            ProductIdentifier = "some-product",
+            Volume = 0
+        };
+
+        _rebateDataStore.GetRebate(Arg.Is(request.RebateIdentifier))
+            .Returns(new Rebate
+            {
+                Amount = 50m,
+                Percentage = 0.1m,
+                Incentive = IncentiveType.AmountPerUom
+            });
+
+        _productDataStore.GetProduct(Arg.Is(request.ProductIdentifier))
+            .Returns(new Product
+            {
+                Price = 200m,
+                SupportedIncentives = SupportedIncentiveType.AmountPerUom
+            });
+
+        _rebateCalculatorFactory.TryGet(Arg.Is(IncentiveType.AmountPerUom), out Arg.Any<IRebateCalculator>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = new AmountPerUomCalculator();
+                return true;
+            });
+            
+        // Act
+        var result = _rebateService.Calculate(request);
+
+        // Assert
+        Assert.False(result.IsSuccess);    
+        _rebateCalculatorFactory.Received(1)
+            .TryGet(Arg.Is(IncentiveType.AmountPerUom), out Arg.Any<IRebateCalculator>());
+    }
+
+    [Fact(DisplayName = "Should return failure when incentive is AmountPerUom and amount is invalid")]
+    public void Should_ReturnFailure_When_AmountPerUomAndAmountIsInvalid()
+    {
+        // Arrange
+        var request = new CalculateRebateRequest
+        {
+            RebateIdentifier = "some-rebate",
+            ProductIdentifier = "some-product",
+            Volume = 10
+        };
+
+        _rebateDataStore.GetRebate(Arg.Is(request.RebateIdentifier))
+            .Returns(new Rebate
+            {
+                Amount = 0,
+                Percentage = 0.1m,
+                Incentive = IncentiveType.AmountPerUom
+            });
+
+        _productDataStore.GetProduct(Arg.Is(request.ProductIdentifier))
+            .Returns(new Product
+            {
+                Price = 200m,
+                SupportedIncentives = SupportedIncentiveType.AmountPerUom
+            });
+
+        _rebateCalculatorFactory.TryGet(Arg.Is(IncentiveType.AmountPerUom), out Arg.Any<IRebateCalculator>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = new AmountPerUomCalculator();
+                return true;
+            });
+            
+        // Act
+        var result = _rebateService.Calculate(request);
+
+        // Assert
+        Assert.False(result.IsSuccess);    
+        _rebateCalculatorFactory.Received(1)
+            .TryGet(Arg.Is(IncentiveType.AmountPerUom), out Arg.Any<IRebateCalculator>());
+    }
+
+    [Theory(DisplayName = "Should calculate AmountPerUom when volume is valid")]
+    [InlineData(0.5, 10, 5)]
+    [InlineData(2, 20, 40)]
+    public void Should_Calculate_When_AmountPerUomAndVolumeIsValid(decimal volume,decimal rebateAmount, decimal expectedRebate)
+    {
+        // Arrange
+        var request = new CalculateRebateRequest
+        {
+            RebateIdentifier = "some-rebate",
+            ProductIdentifier = "some-product",
+            Volume = volume
+        };
+
+        _rebateDataStore.GetRebate(Arg.Is(request.RebateIdentifier))
+            .Returns(new Rebate
+            {
+                Amount = rebateAmount,
+                Percentage = 0.1m,
+                Incentive = IncentiveType.AmountPerUom
+            });
+
+        _productDataStore.GetProduct(Arg.Is(request.ProductIdentifier))
+            .Returns(new Product
+            {
+                Price = 200m,
+                SupportedIncentives = SupportedIncentiveType.AmountPerUom
+            });
+
+        _rebateCalculatorFactory.TryGet(Arg.Is(IncentiveType.AmountPerUom), out Arg.Any<IRebateCalculator>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = new AmountPerUomCalculator();
+                return true;
+            });
+            
+        // Act
+        var result = _rebateService.Calculate(request);
+
+        // Assert
+        Assert.True(result.IsSuccess);    
+        Assert.Equal(expectedRebate, result.RebateAmount);
     }
 }

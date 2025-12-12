@@ -22,8 +22,6 @@ public class RebateService : IRebateService
 
     public CalculateRebateResult Calculate(CalculateRebateRequest request)
     {
-        var result = new CalculateRebateResult();
-
         Rebate rebate = _rebateDataStore.GetRebate(request.RebateIdentifier);
 
         if (rebate is null)
@@ -37,56 +35,23 @@ public class RebateService : IRebateService
         if (!product.SupportsIncentive(rebate.Incentive))
             return CalculateRebateResult.Failure();
 
-        var rebateAmount = 0m;
-
-        var calculatorExists = _rebateCalculatorFactory.TryGet(rebate.Incentive, out var calculator);
+        var calculatorExists = _rebateCalculatorFactory.TryGet(rebate.Incentive, out var rebateCalculator);
         if (!calculatorExists)
             return CalculateRebateResult.Failure();
 
-        switch (rebate.Incentive)
+        var context = new RebateCalculationContext
         {
-            case IncentiveType.FixedCashAmount:
-                if (rebate.Amount == 0)
-                {
-                    result.IsSuccess = false;
-                }
-                else
-                {
-                    rebateAmount = rebate.Amount;
-                    result.IsSuccess = true;
-                }
-                break;
+            RebateAmount = rebate.Amount,
+            ProductPrice = product.Price,
+            Volume = request.Volume
+        };
 
-            case IncentiveType.FixedRateRebate:
-                if (rebate.Percentage == 0 || product.Price == 0 || request.Volume == 0)
-                {
-                    result.IsSuccess = false;
-                }
-                else
-                {
-                    rebateAmount += product.Price * rebate.Percentage * request.Volume;
-                    result.IsSuccess = true;
-                }
-                break;
+        var result = rebateCalculator.Calculate(context);
 
-            case IncentiveType.AmountPerUom:
-                if (rebate.Amount == 0 || request.Volume == 0)
-                {
-                    result.IsSuccess = false;
-                }
-                else
-                {
-                    rebateAmount += rebate.Amount * request.Volume;
-                    result.IsSuccess = true;
-                }
-                break;
-        }
+        if (!result.IsSuccess)
+            return CalculateRebateResult.Failure();
 
-        if (result.IsSuccess)
-        {
-            var storeRebateDataStore = new RebateDataStore();
-            storeRebateDataStore.StoreCalculationResult(rebate, rebateAmount);
-        }
+        _rebateDataStore.StoreCalculationResult(rebate, result.RebateAmount);
 
         return result;
     }
