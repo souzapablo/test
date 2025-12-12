@@ -5,26 +5,41 @@ namespace Smartwyre.DeveloperTest.Services;
 
 public class RebateService : IRebateService
 {
+    private readonly IRebateDataStore _rebateDataStore;
+    private readonly IProductDataStore _productDataStore;
+
+    public RebateService(IRebateDataStore rebateDataStore, IProductDataStore productDataStore)
+    {
+        _rebateDataStore = rebateDataStore;
+        _productDataStore = productDataStore;
+    }
+
     public CalculateRebateResult Calculate(CalculateRebateRequest request)
     {
-        var rebateDataStore = new RebateDataStore();
-        var productDataStore = new ProductDataStore();
-
-        Rebate rebate = rebateDataStore.GetRebate(request.RebateIdentifier);
-        Product product = productDataStore.GetProduct(request.ProductIdentifier);
-
         var result = new CalculateRebateResult();
+
+        Rebate rebate = _rebateDataStore.GetRebate(request.RebateIdentifier);
+
+        if (rebate is null)
+        {
+            result.Success = false;
+            return result;
+        }
+        
+        Product product = _productDataStore.GetProduct(request.ProductIdentifier);
+
+        if (product is null)
+        {
+            result.Success = false;
+            return result;
+        }
 
         var rebateAmount = 0m;
 
         switch (rebate.Incentive)
         {
             case IncentiveType.FixedCashAmount:
-                if (rebate == null)
-                {
-                    result.Success = false;
-                }
-                else if (!product.SupportedIncentives.HasFlag(SupportedIncentiveType.FixedCashAmount))
+                if (!product.SupportedIncentives.HasFlag(SupportedIncentiveType.FixedCashAmount))
                 {
                     result.Success = false;
                 }
@@ -40,15 +55,7 @@ public class RebateService : IRebateService
                 break;
 
             case IncentiveType.FixedRateRebate:
-                if (rebate == null)
-                {
-                    result.Success = false;
-                }
-                else if (product == null)
-                {
-                    result.Success = false;
-                }
-                else if (!product.SupportedIncentives.HasFlag(SupportedIncentiveType.FixedRateRebate))
+                if (!product.SupportedIncentives.HasFlag(SupportedIncentiveType.FixedRateRebate))
                 {
                     result.Success = false;
                 }
@@ -64,15 +71,7 @@ public class RebateService : IRebateService
                 break;
 
             case IncentiveType.AmountPerUom:
-                if (rebate == null)
-                {
-                    result.Success = false;
-                }
-                else if (product == null)
-                {
-                    result.Success = false;
-                }
-                else if (!product.SupportedIncentives.HasFlag(SupportedIncentiveType.AmountPerUom))
+                if (!product.SupportedIncentives.HasFlag(SupportedIncentiveType.AmountPerUom))
                 {
                     result.Success = false;
                 }
