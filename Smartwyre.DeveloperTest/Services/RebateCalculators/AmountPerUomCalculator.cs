@@ -1,4 +1,3 @@
-using System;
 using Smartwyre.DeveloperTest.Types;
 
 namespace Smartwyre.DeveloperTest.Services.RebateCalculators;
