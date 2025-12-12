@@ -15,3 +15,9 @@ public class RebateDataStore
         // Update account in database, code removed for brevity
     }
 }
+
+public interface IRebateDataStore
+{
+    Rebate GetRebate(string rebateIdentifier);
+    void StoreCalculationResult(Rebate account, decimal rebateAmount);
+}

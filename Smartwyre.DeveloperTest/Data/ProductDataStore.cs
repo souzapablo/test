@@ -10,3 +10,8 @@ public class ProductDataStore
         return new Product();
     }
 }
+
+public interface IProductDataStore
+{
+    Product GetProduct(string productIdentifier);
+}
