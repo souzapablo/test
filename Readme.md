@@ -1,46 +1,68 @@
-# Smartwyre Developer Test Instructions
+## Implementation Notes
 
-You have been selected to complete our candidate coding exercise. Please follow the directions in this readme.
+### Design Decisions
 
-Clone, **DO NOT FORK**, this repository to your account on the online Git resource of your choosing (GitHub, BitBucket, GitLab, etc.). Your solution should retain previous commit history and you should utilize best practices for committing your changes to the repository.
+- **Strategy Pattern**: Each incentive type has its own calculator class implementing `IRebateCalculator`, making it easy to add new incentive types without modifying existing code.
+- **Factory Pattern**: `RebateCalculatorFactory` manages calculator instances and provides them based on incentive type.
+- **Dependency Injection**: All dependencies are injected through constructors, making the code highly testable.
+- **Single Responsibility**: Each calculator class is responsible for only one incentive type's calculation logic.
 
-You are welcome to use whatever tools you normally would when coding — including documentation, libraries, frameworks, or AI tools (such as ChatGPT or Copilot).
+### Adding New Incentive Types
 
-However, it is important that you fully understand your solution. As part of the interview process, we will review your code with you in detail. You should be able to:
+To add a new incentive type:
 
-- Explain the design choices you made.
-- Walk us through how your solution works.
-- Make modifications or extensions to your code during the review.
+1. Add the new type to the `IncentiveType` enum
+2. Add the corresponding flag to `SupportedIncentiveType` enum
+3. Create a new calculator class implementing `IRebateCalculator`:
+   ```csharp
+   public class NewIncentiveCalculator : IRebateCalculator
+   {
+       public IncentiveType Incentive => IncentiveType.NewIncentive;
+       
+       public CalculateRebateResult Calculate(RebateCalculationContext context)
+       {
+           // Implementation
+       }
+   }
+   ```
+4. Register the calculator in the `RebateCalculatorFactory` (in `Program.cs` for the runner, or via DI container in production)
 
-Please note: if your submission appears to have been generated entirely by an AI agent or another third party, without your own understanding or contribution, it will not meet our evaluation criteria.
+No changes are required to `RebateService`.
 
-# The Exercise
+### Running the Application
 
-In the 'RebateService.cs' file you will find a method for calculating a rebate. At a high level the steps for calculating a rebate are:
+**Command Line Arguments:**
+```bash
+dotnet run --project Smartwyre.DeveloperTest.Runner/Smartwyre.DeveloperTest.Runner.csproj -- "REBATE-IDENTIFIER" "PRODUCT-IDENTIFIER" "VOLUME"
+```
 
- 1. Lookup the rebate that the request is being made against.
- 2. Lookup the product that the request is being made against.
- 2. Check that the rebate and request are valid to calculate the incentive type rebate.
- 3. Store the rebate calculation.
+**Interactive Mode:**
+```bash
+dotnet run --project Smartwyre.DeveloperTest.Runner/Smartwyre.DeveloperTest.Runner.csproj
+```
+The application will prompt for inputs and continue until you type `quit`.
 
-What we'd like you to do is refactor the code with the following things in mind:
+### Test Data
 
- - Adherence to SOLID principles
- - Testability
- - Readability
- - Currently there are 3 known incentive types. In the future the business will want to add many more incentive types. Your solution should make it easy for developers to add new incentive types in the future.
+The data stores contain sample data for testing:
 
-We’d also like you to 
- - Add some unit tests to the Smartwyre.DeveloperTest.Tests project to show how you would test the code that you’ve produced 
- - Run the RebateService from the Smartwyre.DeveloperTest.Runner console application accepting inputs (either via command line arguments or via prompts is fine)
+**Rebates:**
+- `FIXED-RATE-REBATE-001` - Fixed Rate Rebate (15% percentage)
+- `AMOUNT-PER-UOM-001` - Amount Per UOM ($5.50 per unit)
+- `FIXED-CASH-AMOUNT-001` - Fixed Cash Amount ($100.00)
 
-The only specific "rules" are:
+**Products:**
+- `PRODUCT-FIXED-RATE` - Supports FixedRateRebate
+- `PRODUCT-AMOUNT-PER-UOM` - Supports AmountPerUom
+- `PRODUCT-FIXED-CASH` - Supports FixedCashAmount
 
-- The solution must build
-- All tests must pass
+### Running Tests
 
-You are free to use any frameworks/NuGet packages that you see fit. You should plan to spend around 1 hour completing the exercise.
+```bash
+dotnet test
+```
 
-Feel free to use code comments to describe your changes. You are also welcome to update this readme with any important details for us to consider.
-
-Once you have completed the exercise either ensure your repository is available publicly or contact the hiring manager to set up a private share.
+The test suite includes comprehensive unit tests using xUnit and NSubstitute, covering:
+- Success scenarios for all three incentive types
+- Failure scenarios (missing rebate/product, invalid data, unsupported incentives)
+- Edge cases and boundary conditions
