@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Smartwyre.DeveloperTest.Types;
 
-namespace Smartwyre.DeveloperTest.Services.IncentiveCalculators;
+namespace Smartwyre.DeveloperTest.Services.RebateCalculators;
 
 public class RebateCalculatorFactory : IRebateCalculatorFactory
 {

@@ -1,7 +1,7 @@
 using NSubstitute;
 using Smartwyre.DeveloperTest.Data;
 using Smartwyre.DeveloperTest.Services;
-using Smartwyre.DeveloperTest.Services.IncentiveCalculators;
+using Smartwyre.DeveloperTest.Services.RebateCalculators;
 using Smartwyre.DeveloperTest.Types;
 using Xunit;
 

@@ -1,5 +1,5 @@
 ﻿using Smartwyre.DeveloperTest.Data;
-using Smartwyre.DeveloperTest.Services.IncentiveCalculators;
+using Smartwyre.DeveloperTest.Services.RebateCalculators;
 using Smartwyre.DeveloperTest.Types;
 
 namespace Smartwyre.DeveloperTest.Services;
